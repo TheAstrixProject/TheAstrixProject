@@ -1,7 +1,7 @@
 ## Constants
-framerate = 30#fps
+framerate = 60#fps
 scale = 900000#m/px
-simspeed = 100000#x
+simspeed = 100000#x This is flawed
 G = 6.67e-11#N*m^2/kg^2
 
 ## Constructors
@@ -39,7 +39,7 @@ totalGravityVector = (p,arr) ->
   tgv = vs.reduce(((a,v) -> a.add(v)), new Vector2(0,0))
   return tgv
 
-animate = (p,arr) ->
+update = (p,arr) ->
   p.V = p.V.add(totalGravityVector(p,arr))
   p.X -= (p.V.X / framerate) * simspeed # Why must this be negative?
   p.Y -= (p.V.Y / framerate) * simspeed
@@ -94,6 +94,6 @@ sizeCanvas()
 planets.sampledBy(tick).onValue((model) ->
   clear()
   for planet in model
-    animate(planet,model)
+    update(planet,model)
     draw(planet)
   )
