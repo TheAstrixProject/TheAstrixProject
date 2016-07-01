@@ -1,7 +1,7 @@
 ## Constants
-framerate = 60#fps
+fps = 30#fps
+tps = 1000#tps
 scale = 900000#m/px
-simspeed = 100000#x This is flawed
 G = 6.67e-11#N*m^2/kg^2
 
 ## Constructors
@@ -31,7 +31,7 @@ Planet = (x,y) ->
   return this
 
 ## Functions
-fps = (d) -> 1000 / d
+ticksToMilliseconds = (d) -> 1000 / d
 
 totalGravityVector = (p,arr) ->
   ps = arr.filter((x) -> x != p)
@@ -41,8 +41,8 @@ totalGravityVector = (p,arr) ->
 
 update = (p,arr) ->
   p.V = p.V.add(totalGravityVector(p,arr))
-  p.X -= (p.V.X / framerate) * simspeed # Why must this be negative?
-  p.Y -= (p.V.Y / framerate) * simspeed
+  p.X -= (p.V.X / fps) # Why must this be negative?
+  p.Y -= (p.V.Y / fps)
 
 sizeCanvas = () ->
   canvas = $('#screen')[0]
@@ -66,7 +66,8 @@ resize = $(window).asEventStream('resize')
 clicksRaw = $('#screen').asEventStream('click')
 reset = $('#reset').asEventStream('click').map('reset')
 combinedInput = clicksRaw.merge(reset)
-tick = Bacon.interval(fps(framerate))
+logicTick = Bacon.interval(ticksToMilliseconds(tps))
+frameTick = Bacon.interval(ticksToMilliseconds(fps))
 
 ## Subscriptions
 resize.onValue(sizeCanvas)
@@ -90,10 +91,16 @@ planets = combinedInput.scan(init, (a,e) ->
 ## Initialize
 sizeCanvas()
 
-## Game Loop
-planets.sampledBy(tick).onValue((model) ->
+## Game Loop (Logic)
+planets.sampledBy(frameTick).onValue((model) ->
   clear()
   for planet in model
     update(planet,model)
+  )
+
+## Game Loop (Draw)
+planets.sampledBy(frameTick).onValue((model) ->
+  clear()
+  for planet in model
     draw(planet)
   )
