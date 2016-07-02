@@ -5,6 +5,7 @@ scale = 1350000#m/px
 
 ## Functions
 update = (p,arr) ->
+  console.log(Collisions.check(p,arr))
   A = Phys.totalGravityVector(p,arr).scalar(1/fps).scalar(simSpeed)
   p.V = p.V.add(A)
   p.X -= (p.V.X / fps) * simSpeed # Why must this be negative?
