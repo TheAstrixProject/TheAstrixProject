@@ -8,7 +8,15 @@
 
 <body style="background-color:black;">
   <canvas id="screen"></canvas>
-  <button id="reset">Clear</button>
+  <div id="controls">
+    <button id="reset" style="display: inline-block;">Reset</button>
+    <button id="slower" style="display: inline-block;">Slower</button>
+    <p id="speed" style="display: inline-block; color: white;">50000</p>
+    <p style="display: inline-block; color: white;">x</p>
+    <button id="faster" style="display: inline-block;">Faster</button>
+  </div>
+  <script src="util.js"></script>
+  <script src="phys.js"></script>
   <script src="main.js"></script>
 </body>
 

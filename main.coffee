@@ -1,55 +1,14 @@
 ## Constants
-fps = 30#fps
-tps = 1000#tps
-scale = 900000#m/px
-G = 6.67e-11#N*m^2/kg^2
-
-## Constructors
-Vector2 = (x,y) ->
-  this.X = x
-  this.Y = y
-  this.add = (v) ->
-    return (new Vector2(this.X + v.X, this.Y + v.Y))
-  this.scalar = (s) ->
-    return (new Vector2(this.X * s, this.Y * s))
-  return this
-
-Planet = (x,y) ->
-  this.X = x
-  this.Y = y
-  this.V = new Vector2(0,0)
-  this.M = 5.972e24 # kg
-  this.R = 6.371e6 # m
-  this.gVectorTo = (p) ->
-    x = this.X - p.X
-    y = this.Y - p.Y
-    r = Math.sqrt(x * x + y * y)
-    g = ((G * p.M) / (r * r))
-    theta = Math.atan2(y,x)
-    gVector = new Vector2(Math.cos(theta) * g, Math.sin(theta) * g)
-    return gVector
-  return this
+fps = 60#fps
+simSpeed = 50000#x
+scale = 1350000#m/px
 
 ## Functions
-ticksToMilliseconds = (d) -> 1000 / d
-
-totalGravityVector = (p,arr) ->
-  ps = arr.filter((x) -> x != p)
-  vs = ps.map((x) -> p.gVectorTo(x))
-  tgv = vs.reduce(((a,v) -> a.add(v)), new Vector2(0,0))
-  return tgv
-
 update = (p,arr) ->
-  p.V = p.V.add(totalGravityVector(p,arr))
-  p.X -= (p.V.X / fps) # Why must this be negative?
-  p.Y -= (p.V.Y / fps)
-
-sizeCanvas = () ->
-  canvas = $('#screen')[0]
-  canvas.style.width ='100%'
-  canvas.style.height='95%' # Why does 100% make the canvas bigger than the window?
-  canvas.width  = canvas.offsetWidth
-  canvas.height = canvas.offsetHeight
+  A = Phys.totalGravityVector(p,arr).scalar(1/fps).scalar(simSpeed)
+  p.V = p.V.add(A)
+  p.X -= (p.V.X / fps) * simSpeed # Why must this be negative?
+  p.Y -= (p.V.Y / fps) * simSpeed
 
 clear = () ->
   canvas = $('#screen')[0]
@@ -65,42 +24,43 @@ draw = (p) ->
 resize = $(window).asEventStream('resize')
 clicksRaw = $('#screen').asEventStream('click')
 reset = $('#reset').asEventStream('click').map('reset')
-combinedInput = clicksRaw.merge(reset)
-logicTick = Bacon.interval(ticksToMilliseconds(tps))
-frameTick = Bacon.interval(ticksToMilliseconds(fps))
+slower = $('#slower').asEventStream('click').map(1/2)
+faster = $('#faster').asEventStream('click').map(2)
+speedInput = slower.merge(faster)
+input = clicksRaw.merge(reset)
 
 ## Subscriptions
-resize.onValue(sizeCanvas)
+resize.onValue(Util.sizeCanvas)
 
-## Properties
-
-# Testing Initialization Code
-init = [new Planet(900 * scale,400 * scale),new Planet(900 * scale,(400 * scale) + 3.844e8)]
-#init[0].V = new Vector2(-50 * scale,0)
-init[1].M = 7.35e22
-init[1].R = 1.75e6
-init[1].V = new Vector2(1000,0)
+## Testing Initialization Code
+initState = () ->
+  s = [new Phys.Celestial(600 * scale,275 * scale),new Phys.Celestial(600 * scale,(275 * scale) + 3.844e8)]
+  s[0].V = new Util.Vector2(-12.325,0)
+  s[1].M = 7.35e22
+  s[1].R = 1.75e6
+  s[1].V = new Util.Vector2(1000,0)
+  return s
 # To be removed in the future
 
-planets = combinedInput.scan(init, (a,e) ->
+## Properties
+objs = input.scan(initState(), (a,e) ->
   if e == 'reset'
-    return []
+    return initState()
   else
-    a.concat(new Planet(e.offsetX * scale, e.offsetY * scale)))
+    a.concat(new Phys.Celestial(e.offsetX * scale, e.offsetY * scale)))
+
+speed = speedInput.scan(simSpeed, (a,e) -> Math.round(a * e))
+speed.onValue((newSpeed) -> simSpeed = newSpeed)
+speed.assign($('#speed'), 'text')
 
 ## Initialize
-sizeCanvas()
+Util.sizeCanvas()
 
-## Game Loop (Logic)
-planets.sampledBy(frameTick).onValue((model) ->
+## Game Loop
+objs.sample(Util.ticksToMilliseconds(fps)).onValue((model) ->
   clear()
   for planet in model
+    console.log(simSpeed)
     update(planet,model)
-  )
-
-## Game Loop (Draw)
-planets.sampledBy(frameTick).onValue((model) ->
-  clear()
-  for planet in model
     draw(planet)
   )
