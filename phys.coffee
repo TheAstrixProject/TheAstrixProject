@@ -5,6 +5,7 @@ Phys.G = 6.67e-11#N*m^2/kg^2
 
 ## Constructors
 Phys.Celestial = (x,y) ->
+  @UUID = Util.UUID()
   @X = x
   @Y = y
   @V = new Util.Vector2(0,0)
@@ -33,4 +34,5 @@ Phys.totalGravityVector = (p,arr) ->
 Phys.checkCollisions = (p,arr) ->
   ps = arr.filter((x) -> x != p)
   cs = ps.filter((x) -> x.distanceTo(p) <= x.R + p.R)
-  return cs
+  us = cs.map((x) -> x.UUID) # Not sure if we should return objects or UUID's here...
+  return us

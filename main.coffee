@@ -24,12 +24,13 @@ draw = (p) ->
 ## Streams
 resize = $(window).asEventStream('resize')
 clicksRaw = $('#screen').asEventStream('click')
-reset = $('#reset').asEventStream('click').map('reset')
+reset = $('#reset').asEventStream('click').map('r')
 pause = $('#pause').asEventStream('click')
 slower = $('#slower').asEventStream('click').map(1/2)
 faster = $('#faster').asEventStream('click').map(2)
 speedInput = slower.merge(faster)
-input = clicksRaw.merge(reset)
+input = new Bacon.Bus()
+input.plug(clicksRaw.merge(reset))
 
 ## Subscriptions
 resize.onValue(Util.sizeCanvas)
@@ -46,10 +47,13 @@ initState = () ->
 
 ## Properties
 objs = input.scan(initState(), (a,e) ->
-  if e == 'reset'
-    return initState()
+  if typeof e is 'string'
+    if e.slice(0,2) is 'd '
+      return a.filter((x) -> x.UUID != e.slice(2))
+    if e is 'r'
+      return initState()
   else
-    a.concat(new Phys.Celestial(e.offsetX * scale, e.offsetY * scale)))
+    return a.concat(new Phys.Celestial(e.offsetX * scale, e.offsetY * scale)))
 
 isPaused = pause.map(1).scan(1, (a,v) -> a + v).map((x) -> x % 2 == 0)
 isPaused.onValue((newPaused) -> paused = newPaused)
@@ -65,9 +69,13 @@ Util.sizeCanvas()
 ## Game Loop
 objs.sample(Util.ticksToMilliseconds(fps)).onValue((model) ->
   clear()
+
   for planet in model
-    console.log(Phys.checkCollisions(planet,model))
-    if not paused
-      update(planet,model)
+    if not paused then update(planet,model)
+
+  for planet in model
+    if Phys.checkCollisions(planet,model).length > 0 then input.push('d ' + planet.UUID)
+
+  for planet in model
     draw(planet)
   )
