@@ -1,5 +1,6 @@
 ## Constants
 fps = 60#fps
+paused = false#bool
 simSpeed = 50000#x
 scale = 1350000#m/px
 
@@ -24,6 +25,7 @@ draw = (p) ->
 resize = $(window).asEventStream('resize')
 clicksRaw = $('#screen').asEventStream('click')
 reset = $('#reset').asEventStream('click').map('reset')
+pause = $('#pause').asEventStream('click')
 slower = $('#slower').asEventStream('click').map(1/2)
 faster = $('#faster').asEventStream('click').map(2)
 speedInput = slower.merge(faster)
@@ -49,6 +51,10 @@ objs = input.scan(initState(), (a,e) ->
   else
     a.concat(new Phys.Celestial(e.offsetX * scale, e.offsetY * scale)))
 
+isPaused = pause.map(1).scan(1, (a,v) -> a + v).map((x) -> x % 2 == 0)
+isPaused.onValue((newPaused) -> paused = newPaused)
+isPaused.map((x) -> if x then "Play" else "Pause").assign($('#pause'), 'text')
+
 speed = speedInput.scan(simSpeed, (a,e) -> Math.round(a * e))
 speed.onValue((newSpeed) -> simSpeed = newSpeed)
 speed.assign($('#speed'), 'text')
@@ -60,7 +66,7 @@ Util.sizeCanvas()
 objs.sample(Util.ticksToMilliseconds(fps)).onValue((model) ->
   clear()
   for planet in model
-    console.log(simSpeed)
-    update(planet,model)
+    if not paused
+      update(planet,model)
     draw(planet)
   )

@@ -1,0 +1,11 @@
+body {
+  background-color:black;
+}
+
+p {
+  color: white;
+}
+
+button, p {
+  display: inline-block;
+}

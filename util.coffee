@@ -16,6 +16,6 @@ Util.ticksToMilliseconds = (d) -> 1000 / d
 Util.sizeCanvas = () ->
   canvas = $('#screen')[0]
   canvas.style.width ='100%'
-  canvas.style.height='95%' # Why does 100% make the canvas bigger than the window?
+  canvas.style.height='90%' # Why does 100% make the canvas bigger than the window?
   canvas.width  = canvas.offsetWidth
   canvas.height = canvas.offsetHeight
