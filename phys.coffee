@@ -34,5 +34,4 @@ Phys.totalGravityVector = (p,arr) ->
 Phys.checkCollisions = (p,arr) ->
   ps = arr.filter((x) -> x != p)
   cs = ps.filter((x) -> x.distanceTo(p) <= x.R + p.R)
-  us = cs.map((x) -> x.UUID) # Not sure if we should return objects or UUID's here...
-  return us
+  return cs
