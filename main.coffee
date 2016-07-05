@@ -6,6 +6,7 @@ scale = 1350000#m/px
 
 ## Functions
 update = (p,arr) ->
+  p.V = Phys.collisionElastic(p,Phys.checkCollisions(p,arr))#.scalar(1/fps).scalar(simSpeed)
   A = Phys.totalGravityVector(p,arr).scalar(1/fps).scalar(simSpeed)
   p.V = p.V.add(A)
   p.X -= (p.V.X / fps) * simSpeed # Why must this be negative?
@@ -73,8 +74,8 @@ objs.sample(Util.ticksToMilliseconds(fps)).onValue((model) ->
   for planet in model
     if not paused then update(planet,model)
 
-  for planet in model
-    if Phys.checkCollisions(planet,model).length > 0 then input.push('d ' + planet.UUID)
+#  for planet in model
+#    if Phys.checkCollisions(planet,model).length > 0 then input.push('d ' + planet.UUID)
 
   for planet in model
     draw(planet)
