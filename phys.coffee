@@ -4,34 +4,36 @@ window.Phys = {}
 Phys.G = 6.67e-11#N*m^2/kg^2
 
 ## Constructors
-Phys.Celestial = (x,y) ->
+Phys.Celestial = (xCoord, yCoord) ->
   @UUID = Util.UUID()
-  @X = x
-  @Y = y
-  @V = new Util.Vector2(0,0)
-  @M = 5.972e24 # kg
-  @R = 6.371e6 # m
-  @distanceTo = (p) ->
-    x = @X - p.X
-    y = @Y - p.Y
-    r = Math.sqrt(x * x + y * y)
-    return r
-  @gVectorTo = (p) ->
-    r = this.distanceTo(p)
-    g = ((Phys.G * p.M) / (r * r))
-    theta = Math.atan2(y,x)
-    gVector = new Util.Vector2(Math.cos(theta) * g, Math.sin(theta) * g)
-    return gVector
+  @xCoord = xCoord
+  @yCoord = yCoord
+  @velocity = new Util.Vector2(0, 0)
+  @mass = 5.972e24 # kg
+  @radius = 6.371e6 # m
+  @distanceTo = (object) ->
+    xDistance = @xCoord - object.xCoord
+    yDistance = @yCoord - object.yCoord
+    distance = Math.sqrt(xDistance ** 2 + yDistance ** 2)
+    return distance
+  @gravityVectorTo = (object) ->
+    xDistance = @xCoord - object.xCoord
+    yDistance = @yCoord - object.yCoord
+    distance = @distanceTo(object)
+    gravity = ((Phys.G * object.mass) / (distance ** 2))
+    theta = Math.atan2(yDistance, xDistance)
+    gravityVector = new Util.Vector2(Math.cos(theta) * gravity, Math.sin(theta) * gravity)
+    return gravityVector
   return this
 
 ## Functions
-Phys.totalGravityVector = (p,arr) ->
-  ps = arr.filter((x) -> x != p)
-  vs = ps.map((x) -> p.gVectorTo(x))
-  tgv = vs.reduce(((a,v) -> a.add(v)), new Util.Vector2(0,0))
-  return tgv
+Phys.totalGravityVector = (object, allObjects) ->
+  otherObjects = allObjects.filter((obj) -> obj != object)
+  gravities = otherObjects.map((otherObject) -> object.gravityVectorTo(otherObject))
+  totalGravity = gravities.reduce(((totalVector, vector) -> totalVector.add(vector)), new Util.Vector2(0, 0))
+  return totalGravity
 
-Phys.checkCollisions = (p,arr) ->
-  ps = arr.filter((x) -> x != p)
-  cs = ps.filter((x) -> x.distanceTo(p) <= x.R + p.R)
-  return cs
+Phys.checkCollisions = (object, allObjects) ->
+  otherObjects = allObjects.filter((obj) -> obj != object)
+  collisions = otherObjects.filter((otherObject) -> object.distanceTo(otherObject) <= object.radius + otherObject.radius)
+  return collisions
