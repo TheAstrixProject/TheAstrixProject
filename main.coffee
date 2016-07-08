@@ -6,11 +6,12 @@ scale = 1350000#m/px
 
 ## Functions
 update = (p,arr) ->
-  p.V = Phys.collisionElastic(p,Phys.checkCollisions(p,arr))#.scalar(1/fps).scalar(simSpeed)
   A = Phys.totalGravityVector(p,arr).scalar(1/fps).scalar(simSpeed)
   p.V = p.V.add(A)
   p.X -= (p.V.X / fps) * simSpeed # Why must this be negative?
   p.Y -= (p.V.Y / fps) * simSpeed
+  p.V = Phys.collisionElastic(p,Phys.checkCollisions(p,arr))#.scalar(1/fps).scalar(simSpeed)
+
 
 clear = () ->
   canvas = $('#screen')[0]
