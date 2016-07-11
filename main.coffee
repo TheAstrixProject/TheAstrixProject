@@ -1,6 +1,7 @@
 ## Constants
 fps = 60#fps
 paused = false#bool
+fs = false
 simSpeed = 50000#x
 scale = 1350000#m/px
 
@@ -24,6 +25,7 @@ draw = (p) ->
 
 ## Streams
 resize = $(window).asEventStream('resize')
+fs = $('#fs').asEventStream('click').map('toggle')
 clicksRaw = $('#screen').asEventStream('click')
 reset = $('#reset').asEventStream('click').map('r')
 pause = $('#pause').asEventStream('click')
@@ -34,6 +36,20 @@ input = new Bacon.Bus()
 input.plug(clicksRaw.merge(reset))
 
 ## Subscriptions
+fs.onValue(
+  canvas = $('#screen')[0]
+  console.log(fs)
+  if fs == true
+    fs = false
+    canvas.style.width ='100%'
+    canvas.style.height='90%' # Why does 100% make the canvas bigger than the window?
+  else
+    fs = true
+    canvas.style.width ='70%'
+    canvas.style.height='63%'
+  canvas.width  = canvas.offsetWidth
+  canvas.height = canvas.offsetHeight
+)
 resize.onValue(Util.sizeCanvas)
 
 ## Testing Initialization Code
