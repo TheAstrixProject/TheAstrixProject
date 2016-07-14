@@ -3,6 +3,9 @@ fps = 60#fps
 isPaused = false#bool
 simSpeed = 50000#x
 scale = 1350000#m/px
+viewPort = new Util.Vector2(0,0)#Tuple
+lastView = new Util.Vector2(0,0)#Tuple
+lastClick = new Util.Vector2(0,0)#Tuple
 
 ## Functions
 
@@ -22,8 +25,8 @@ drawObject = (object) ->
   canvasContext = $('#screen')[0].getContext('2d')
   # Draws a "POL" for each object.
   canvasContext.drawImage($('#POL')[0]
-    , (object.xCoord / scale) - (object.radius / scale)
-    , (object.yCoord / scale) - (object.radius / scale)
+    , (object.xCoord / scale) - (object.radius / scale) + viewPort.X
+    , (object.yCoord / scale) - (object.radius / scale) + viewPort.Y
     , (object.radius / scale) * 2
     , (object.radius / scale) * 2)
 
@@ -31,8 +34,8 @@ drawObject = (object) ->
 
 # Stream of window resize events.
 resizeS = $(window).asEventStream('resize')
-# Stream of click events on the screen.
-clickS = $('#screen').asEventStream('click')
+# Stream of mouse events on the screen.
+clickS = $('#screen').asEventStream('mousedown mouseup mousemove mousewheel')
 # Stream of 'reset' strings created when the 'reset' button is clicked.
 resetS = $('#reset').asEventStream('click').map('reset')
 # Stream of click events created when the 'pause' button is clicked.
@@ -55,7 +58,7 @@ resizeS.onValue(Util.sizeCanvas)
 
 ## Testing Initialization Code.
 initState = () ->
-  s = [new Phys.Celestial(600 * scale, 275 * scale), new Phys.Celestial(600 * scale, (275 * scale) + 3.844e8)]
+  s = [new Phys.Celestial(0,0), new Phys.Celestial(0, 3.844e8)]
   s[0].velocity = new Util.Vector2(-12.325, 0)
   s[1].mass = 7.35e22
   s[1].radius = 1.75e6
@@ -77,9 +80,31 @@ modelP = inputS.scan(initState(), (model, event) ->
     if event is 'reset'
       # Return the initial state.
       return initState()
-  else
-    # Return an updated model that is the same plus a new object with the mouse's X and Y coords.
-    return model.concat(new Phys.Celestial(event.offsetX * scale, event.offsetY * scale)))
+  if event.type is 'mousedown'
+    if event.which == 1
+      # Return an updated model that is the same plus a new object with the mouse's X and Y coords.
+      return model.concat(new Phys.Celestial((event.offsetX - viewPort.X) * scale, (event.offsetY - viewPort.Y) * scale))
+    if event.which == 2
+      # Comment this section
+      lastView = viewPort
+      lastClick = new Util.Vector2(event.offsetX, event.offsetY)
+      return model
+  if event.type is 'mouseup' or event.type is 'mousemove'
+    if event.which == 2
+      # Comment this section
+      shift = new Util.Vector2(event.offsetX - lastClick.X, event.offsetY - lastClick.Y)
+      viewPort = lastView.add(shift)
+      return model
+    else
+      # Ignore input and return the same model.
+      return model
+  if event.type is 'mousewheel'
+    if event.originalEvent.wheelDelta > 0
+      scale = Math.round(scale * 0.9)
+    else
+      scale = Math.round(scale * 1.1)
+    return model
+)
 
 # Changes 'isPaused' value when pause stream has new value.
 pauseP = pauseS.map(1).scan(1, (accumulator, value) -> accumulator + value).map((value) -> value % 2 == 0)
@@ -92,7 +117,8 @@ speedP.onValue((newSpeed) -> simSpeed = newSpeed)
 speedP.assign($('#speed'), 'text')
 
 ## Initialize
-Util.sizeCanvas()
+screenSize = Util.sizeCanvas()
+viewPort = screenSize.multiply(1/2)
 
 ## Game Loop
 modelP.sample(Util.ticksToMilliseconds(fps)).onValue((model) ->

@@ -34,6 +34,7 @@ Util.sizeCanvas = () ->
   canvas.style.height ='90%'
   canvas.width  = canvas.offsetWidth
   canvas.height = canvas.offsetHeight
+  return new Util.Vector2(canvas.width, canvas.height)
 
 # This function clears the canvas and preps it for a redraw.
 Util.clear = () ->
