@@ -5,7 +5,6 @@
 
 #TODO
   * Clean and comment code
-  * Add viewport controls
   * Create a general game object (incorporate global variables into 'modelP')
   * Add general event constructor (for the input stream)
   * Add sound assets and playback capability
