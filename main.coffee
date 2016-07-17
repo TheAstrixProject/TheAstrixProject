@@ -89,6 +89,8 @@ modelP = inputS.scan(initState(), (model, event) ->
       lastView = viewPort
       lastClick = new Util.Vector2(event.offsetX, event.offsetY)
       return model
+    else
+      return model
   if event.type is 'mouseup' or event.type is 'mousemove'
     if event.which == 2
       # Comment this section
