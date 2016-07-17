@@ -3,6 +3,7 @@ fps = 60#fps
 isPaused = false#bool
 simSpeed = 50000#x
 scale = 1350000#m/px
+mousePos = new Phys.Celestial(0,0)
 viewPort = new Util.Vector2(0,0)#Tuple
 lastView = new Util.Vector2(0,0)#Tuple
 lastClick = new Util.Vector2(0,0)#Tuple
@@ -58,10 +59,8 @@ resizeS.onValue(Util.sizeCanvas)
 
 ## Testing Initialization Code.
 initState = () ->
-  s = [new Phys.Celestial(0,0), new Phys.Celestial(0, 3.844e8)]
+  s = [new Phys.Celestial(0, 0, 5.972e24, 6.371e6), new Phys.Celestial(0, 3.844e8, 7.35e22, 1.75e6)]
   s[0].velocity = new Util.Vector2(-12.325, 0)
-  s[1].mass = 7.35e22
-  s[1].radius = 1.75e6
   s[1].velocity = new Util.Vector2(1000, 0)
   return s
 # To be removed in the future.
@@ -83,7 +82,7 @@ modelP = inputS.scan(initState(), (model, event) ->
   if event.type is 'mousedown'
     if event.which == 1
       # Return an updated model that is the same plus a new object with the mouse's X and Y coords.
-      return model.concat(new Phys.Celestial((event.offsetX - viewPort.X) * scale, (event.offsetY - viewPort.Y) * scale))
+      return model.concat(new Phys.Celestial((event.offsetX - viewPort.X) * scale, (event.offsetY - viewPort.Y) * scale, 5.972e24, 6.371e6))
     if event.which == 2
       # Comment this section
       lastView = viewPort
@@ -98,6 +97,8 @@ modelP = inputS.scan(initState(), (model, event) ->
       viewPort = lastView.add(shift)
       return model
     else
+      mousePos.xCoord = (event.offsetX - viewPort.X) * scale
+      mousePos.yCoord = (event.offsetY - viewPort.Y) * scale
       # Ignore input and return the same model.
       return model
   if event.type is 'mousewheel'
@@ -136,6 +137,10 @@ modelP.sample(Util.ticksToMilliseconds(fps)).onValue((model) ->
   for object in model
     # Check collisions and remove colliding objects by sending a delete request to the 'inputS' bus.
     if Phys.checkCollisions(object, model).length > 0 then inputS.push('delete ' + object.UUID)
+
+  for object in Phys.checkCollisions(mousePos,model)
+    objectInfo = 'UUID: ' + object.UUID + '\tVelocity: (' + Math.round(object.velocity.X) + ', ' + Math.round(object.velocity.Y) + ')'
+    $('#objectInfo').text(objectInfo)
 
   # For every object...
   for object in model
