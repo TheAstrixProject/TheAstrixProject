@@ -75,6 +75,13 @@ modelP = inputS.scan(initState(), (model, event) ->
     if event.slice(0, 7) is 'delete '
       # Return the model without the object whose UUID is equal to the remaining characters after 'delete' and SPACE.
       return model.filter((x) -> x.UUID != event.slice(7))
+    if event.slice(0, 8) is 'collide '
+      console.log(event.slice(8).split(' '))
+      collidingObjects = model.filter((x) -> event.slice(8).split(' ').indexOf(x.UUID) < 0)
+      console.log(collidingObjects)
+      newModel = model.filter((x) -> event.slice(8).split(' ').indexOf(x.UUID) > 0)
+      newModel.push(Phys.handleCollision(collidingObjects))
+      return newModel
     # If the string is 'reset'...
     if event is 'reset'
       # Return the initial state.
@@ -135,8 +142,8 @@ modelP.sample(Util.ticksToMilliseconds(fps)).onValue((model) ->
 
   # For every object...
   for object in model
-    # Check collisions and remove colliding objects by sending a delete request to the 'inputS' bus.
-    if Phys.checkCollisions(object, model).length > 0 then inputS.push('delete ' + object.UUID)
+    collisions = Phys.checkCollisions(object,model)
+    if collisions.length > 0 then inputS.push(Util.formatCollisions(collisions.concat(object)))
 
   for object in Phys.checkCollisions(mousePos,model)
     objectInfo = 'UUID: ' + object.UUID + '\tVelocity: (' + Math.round(object.velocity.X) + ', ' + Math.round(object.velocity.Y) + ')'

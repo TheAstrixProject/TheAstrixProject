@@ -41,3 +41,6 @@ Util.clear = () ->
   canvas = $('#screen')[0] # Get the canvas.
   canvasContext = canvas.getContext('2d') # Get the drawing context.
   canvasContext.clearRect(0, 0, canvas.width, canvas.height); # Clear the canvas.
+
+Util.formatCollisions = (allObjects) ->
+  allObjects.reduce(((accStr,object) -> accStr + ' ' + object.UUID), 'collide')

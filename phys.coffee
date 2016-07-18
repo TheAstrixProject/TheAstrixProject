@@ -37,3 +37,14 @@ Phys.checkCollisions = (object, allObjects) ->
   otherObjects = allObjects.filter((obj) -> obj != object)
   collisions = otherObjects.filter((otherObject) -> object.distanceTo(otherObject) <= object.radius + otherObject.radius)
   return collisions
+
+Phys.handleCollision = (collidingObjects) ->
+  combinedObject = collidingObjects.reduce((combined, object) ->
+    tempCombined = new Phys.Celestial( combined.xCoord + object.xCoord / 2, combined.yCoord + object.yCoord / 2
+                                     , combined.mass + object.mass, combined.radius + object.radius)
+    finalXP = combined.velocity.X * combined.mass + object.velocity.X * object.mass
+    finalYP = combined.velocity.Y * combined.mass + object.velocity.Y * object.mass
+    tempCombined.velocity = new Util.Vector2(finalXP,finalYP).multiply(1 / tempCombined.mass)
+    return tempCombined
+    )
+  return combinedObject
