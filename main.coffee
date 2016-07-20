@@ -59,9 +59,11 @@ resizeS.onValue(Util.sizeCanvas)
 
 ## Testing Initialization Code.
 initState = () ->
-  s = [new Phys.Celestial(0, 0, 5.972e24, 6.371e6), new Phys.Celestial(0, 3.844e8, 7.35e22, 1.75e6)]
-  s[0].velocity = new Util.Vector2(-12.325, 0)
-  s[1].velocity = new Util.Vector2(1000, 0)
+  s = [ new Phys.Celestial(0, -100 * scale, 5.972e24, 6.371e6), new Phys.Celestial(100 * scale, 0, 5.972e24, 6.371e6)
+      , new Phys.Celestial(-100 * scale, 0, 5.972e24, 6.371e6), new Phys.Celestial(0, 100 * scale, 5.972e24, 6.371e6) ]
+  #s = [new Phys.Celestial(0, 0, 5.972e24, 6.371e6), new Phys.Celestial(0, 3.844e8, 7.35e22, 1.75e6)]
+  #s[0].velocity = new Util.Vector2(-12.325, 0)
+  #s[1].velocity = new Util.Vector2(1000, 0)
   return s
 # To be removed in the future.
 
@@ -76,24 +78,11 @@ modelP = inputS.scan(initState(), (model, event) ->
       # Return the model without the object whose UUID is equal to the remaining characters after 'delete' and SPACE.
       return model.filter((x) -> x.UUID != event.slice(7))
     if event.slice(0, 8) is 'collide '
-      console.log('Colliding UUIDs')
-      console.log(event.slice(8).split(' '))
-      console.log('Model')
-      console.log(model)
-      console.log('IndexOf')
-      for o in model
-        console.log(event.slice(8).split(' ').indexOf(o.UUID))
       collidingObjects = model.filter((x) -> event.slice(8).split(' ').indexOf(x.UUID) > -1)
       if collidingObjects.length != event.slice(8).split(' ').length
         return model
-      console.log('Colliding Objects')
-      console.log(collidingObjects)
-      newModel = model.filter((x) -> event.slice(8).split(' ').indexOf(x.UUID) < 0)
-      console.log('New model 1')
-      console.log(newModel)
+      newModel = model.filter((x) -> collidingObjects.map((x) -> x.UUID).indexOf(x.UUID) < 0)
       newModel.push(Phys.handleCollision(collidingObjects))
-      console.log('New model 2')
-      console.log(newModel)
       return newModel
     # If the string is 'reset'...
     if event is 'reset'

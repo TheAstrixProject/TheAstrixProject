@@ -40,7 +40,7 @@ Phys.checkCollisions = (object, allObjects) ->
 
 Phys.handleCollision = (collidingObjects) ->
   combinedObject = collidingObjects.reduce((combined, object) ->
-    tempCombined = new Phys.Celestial( combined.xCoord + object.xCoord / 2, combined.yCoord + object.yCoord / 2
+    tempCombined = new Phys.Celestial( combined.xCoord, combined.yCoord
                                      , combined.mass + object.mass, combined.radius + object.radius)
     finalXP = combined.velocity.X * combined.mass + object.velocity.X * object.mass
     finalYP = combined.velocity.Y * combined.mass + object.velocity.Y * object.mass
