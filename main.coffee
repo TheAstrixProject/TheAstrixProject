@@ -26,8 +26,8 @@ drawObject = (object) ->
   canvasContext = $('#screen')[0].getContext('2d')
   # Draws a "POL" for each object.
   canvasContext.drawImage($('#POL')[0]
-    , (object.xCoord / scale) - (object.radius / scale) + viewPort.X
-    , (object.yCoord / scale) - (object.radius / scale) + viewPort.Y
+    , (object.xCoord / scale) - (object.radius / scale) + (viewPort.X / scale)
+    , (object.yCoord / scale) - (object.radius / scale) + (viewPort.Y / scale)
     , (object.radius / scale) * 2
     , (object.radius / scale) * 2)
 
@@ -75,6 +75,13 @@ modelP = inputS.scan(initState(), (model, event) ->
     if event.slice(0, 7) is 'delete '
       # Return the model without the object whose UUID is equal to the remaining characters after 'delete' and SPACE.
       return model.filter((x) -> x.UUID != event.slice(7))
+    if event.slice(0, 8) is 'collide '
+      console.log(event.slice(8).split(' '))
+      collidingObjects = model.filter((x) -> event.slice(8).split(' ').indexOf(x.UUID) < 0)
+      console.log(collidingObjects)
+      newModel = model.filter((x) -> event.slice(8).split(' ').indexOf(x.UUID) > 0)
+      newModel.push(Phys.handleCollision(collidingObjects))
+      return newModel
     # If the string is 'reset'...
     if event is 'reset'
       # Return the initial state.
@@ -82,10 +89,10 @@ modelP = inputS.scan(initState(), (model, event) ->
   if event.type is 'mousedown'
     if event.which == 1
       # Return an updated model that is the same plus a new object with the mouse's X and Y coords.
-      return model.concat(new Phys.Celestial((event.offsetX - viewPort.X) * scale, (event.offsetY - viewPort.Y) * scale, 5.972e24, 6.371e6))
+      return model.concat(new Phys.Celestial((event.offsetX - (viewPort.X / scale)) * scale, (event.offsetY - (viewPort.Y / scale)) * scale, 5.972e24, 6.371e6))
     if event.which == 2
       # Comment this section
-      lastView = viewPort
+      lastView = viewPort.multiply(1/scale)
       lastClick = new Util.Vector2(event.offsetX, event.offsetY)
       return model
     else
@@ -95,10 +102,11 @@ modelP = inputS.scan(initState(), (model, event) ->
       # Comment this section
       shift = new Util.Vector2(event.offsetX - lastClick.X, event.offsetY - lastClick.Y)
       viewPort = lastView.add(shift)
+      viewPort.multiply(scale)
       return model
     else
-      mousePos.xCoord = (event.offsetX - viewPort.X) * scale
-      mousePos.yCoord = (event.offsetY - viewPort.Y) * scale
+      mousePos.xCoord = (event.offsetX - (viewPort.X / scale)) * scale
+      mousePos.yCoord = (event.offsetY - (viewPort.Y / scale)) * scale
       # Ignore input and return the same model.
       return model
   if event.type is 'mousewheel'
@@ -121,7 +129,8 @@ speedP.assign($('#speed'), 'text')
 
 ## Initialize
 screenSize = Util.sizeCanvas()
-viewPort = screenSize.multiply(1/2)
+viewPort = screenSize.multiply(1/2 * scale)
+
 
 ## Game Loop
 modelP.sample(Util.ticksToMilliseconds(fps)).onValue((model) ->
@@ -135,8 +144,8 @@ modelP.sample(Util.ticksToMilliseconds(fps)).onValue((model) ->
 
   # For every object...
   for object in model
-    # Check collisions and remove colliding objects by sending a delete request to the 'inputS' bus.
-    if Phys.checkCollisions(object, model).length > 0 then inputS.push('delete ' + object.UUID)
+    collisions = Phys.checkCollisions(object,model)
+    if collisions.length > 0 then inputS.push(Util.formatCollisions(collisions.concat(object)))
 
   for object in Phys.checkCollisions(mousePos,model)
     objectInfo = 'UUID: ' + object.UUID + '\tVelocity: (' + Math.round(object.velocity.X) + ', ' + Math.round(object.velocity.Y) + ')'
