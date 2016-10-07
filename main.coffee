@@ -78,12 +78,13 @@ modelP = inputS.scan(initState(), (model, event) ->
     # If the string is 'reset'...
     if event is 'reset'
       # Return the initial state.
+      # Also reset scale, viewPort, simSpeed, and isPaused here.
       return initState()
   if event.type is 'mousedown'
-    if event.which == 1
+    if event.which == 1 && !event.shiftKey
       # Return an updated model that is the same plus a new object with the mouse's X and Y coords.
       return model.concat(new Phys.Celestial((event.offsetX - viewPort.X) * scale, (event.offsetY - viewPort.Y) * scale, 5.972e24, 6.371e6))
-    if event.which == 2
+    if event.which == 2 || (event.which == 1 && event.shiftKey)
       # Comment this section
       lastView = viewPort
       lastClick = new Util.Vector2(event.offsetX, event.offsetY)
@@ -91,7 +92,7 @@ modelP = inputS.scan(initState(), (model, event) ->
     else
       return model
   if event.type is 'mouseup' or event.type is 'mousemove'
-    if event.which == 2
+    if event.which == 2 || (event.which == 1 && event.shiftKey)
       # Comment this section
       shift = new Util.Vector2(event.offsetX - lastClick.X, event.offsetY - lastClick.Y)
       viewPort = lastView.add(shift)
